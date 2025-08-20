@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    
+    triggers {
+        // Run on every Pull Request merge OR push to main
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/20041982/autorobotframework.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                pip install --upgrade pip
+                pip install robotframework
+                '''
+            }
+        }
+
+        stage('Run Robot Framework Tests') {
+            steps {
+                sh '''
+                robot --outputdir results TestCases/
+                '''
+            }
+        }
+
+        stage('Publish Test Results') {
+            steps {
+                publishHTML(target: [
+                    reportDir: 'results',
+                    reportFiles: 'report.html',
+                    reportName: 'Robot Framework Report'
+                ])
+            }
+        }
+    }
+}
